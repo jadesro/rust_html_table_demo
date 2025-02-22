@@ -3,7 +3,9 @@
 //! formatted per our standards
 use std::error::Error;
 use std::fs;
+use std::io::Write;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct AgendaItem {
     time: String,
@@ -74,21 +76,22 @@ fn get_agenda_items_interactively(agenda: &mut Vec<AgendaItem>) {
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Table maker");
+
+    let mut file = fs::File::create("src/agenda.html").expect("Creation Failed");
     let mut agenda: Vec<AgendaItem> = Vec::new();
     get_agenda_items_interactively(&mut agenda);
     let style: String = fs::read_to_string("src/style.html")?;
-    print!("{}", style);
-    print!("{}", INTRO);
-    //let caption = "Agenda";
-    //print!("<div class=\"table_component\">\n<table>\n    <caption>\n        <p>{}</p>\n    </caption>\n<thead>\n<tr>\n    <th>Time</th>\n    <th>Subject</th>\n    <th>Presenter</th>\n</tr>\n</thead>\n<tbody>", caption);
+
+    write!(&mut file, "{}", style)?;
+    write!(&mut file, "{}", INTRO)?;
     for i in agenda {
-        println!("<tr>");
-        println!("    <td>{}</td>", i.time);
-        println!("    <td>{}</td>", i.subject);
-        println!("    <td>{}</td>", i.presenter);
-        println!("</tr>");
+        writeln!(&mut file, "<tr>")?;
+        writeln!(&mut file, "    <td>{}</td>", i.time)?;
+        writeln!(&mut file, "    <td>{}</td>", i.subject)?;
+        writeln!(&mut file, "    <td>{}</td>", i.presenter)?;
+        writeln!(&mut file, "</tr>")?;
     }
-    println!("</tbody>\n</table>\n</div>\n");
+    writeln!(&mut file, "</tbody>\n</table>\n</div>\n")?;
 
     Ok(())
 }
