@@ -1,9 +1,12 @@
 //! Read agenda items from user prompts
 //! and generate an html table
 //! formatted per our standards
+use clap::Parser;
 use std::error::Error;
-use std::fs;
 use std::io::Write;
+
+mod cli;
+use crate::cli::Args;
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -33,7 +36,7 @@ fn inquire(prompt: String) -> String {
     let mut line = String::new();
     println!("{}: ", prompt);
     let _b1 = std::io::stdin().read_line(&mut line).unwrap();
-    // by default the input string includes the Enter key
+    // by default the input string includes the Enter key (newline character)
     // we remove it here with trim() and ensure we return a string
     line.trim().to_string()
 }
@@ -74,13 +77,35 @@ fn get_agenda_items_interactively(agenda: &mut Vec<AgendaItem>) {
     }
 }
 
+fn get_outfile(output_filename: Option<&std::path::PathBuf>) -> Box<dyn std::io::Write> {
+    match output_filename {
+        Some(filename) => Box::new(std::io::BufWriter::new(
+            std::fs::File::create(filename).unwrap_or_else(|err| {
+                panic!("Error {err}. Unable to open {}", filename.to_string_lossy())
+            }),
+        )),
+        None => Box::new(std::io::stdout().lock()),
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Table maker");
+    let args = Args::parse();
+    println!("Output: {:?}", args.output.as_deref());
+    println!("Input: {:?}", args.input.as_deref());
+    println!("Verbose: {:?}", args.verbose);
 
-    let mut file = fs::File::create("src/agenda.html").expect("Creation Failed");
+    //let output_file = Some(std::path::PathBuf::from("src/agenda.html"));
+    //let mut file = get_outfile(output_file.as_ref());
+    let mut file = get_outfile(args.output.as_ref());
+
     let mut agenda: Vec<AgendaItem> = Vec::new();
     get_agenda_items_interactively(&mut agenda);
-    let style: String = fs::read_to_string("src/style.html")?;
+
+    let path_to_style = Some(String::from("src/style.html"));
+    let style = std::fs::read_to_string(
+        path_to_style.ok_or_else(|| String::from("Can't read stylme.html"))?,
+    )?;
 
     write!(&mut file, "{}", style)?;
     write!(&mut file, "{}", INTRO)?;

@@ -1,4 +1,6 @@
 debug/
 target/
+agenda.html
+Cargo.lock
 
 **/**.rs.bk
