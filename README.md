@@ -1,4 +1,4 @@
-#This is a exercise in programming in Rust.
+# This is a exercise in programming in Rust.
 
 ## Purpose
 The program will create an HTML table that can be imported into a larger project or in Mailchimp.  Input is provided by terminal or via a CSV file.
