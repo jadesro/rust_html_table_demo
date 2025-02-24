@@ -32,6 +32,51 @@ const INTRO: &str = r#"
 <tbody>
 "#;
 
+const STYLE: &str = r#"
+<style>
+.table_component {
+    overflow: auto;
+    width: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+}
+.table_component table {
+    border: 1px solid #dededf;
+    height: 100%;
+    width: 95%;
+    table-layout: auto;
+    border-collapse: collapse;
+    border-spacing: 1px;
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: auto;
+}
+.table_component caption {
+    caption-side: top;
+    text-align: center;
+}
+.table_component th {
+    border: 1px solid #dededf;
+    background-color: #eceff1;
+    color: #000000;
+    padding: 8px;
+}
+.table_component td {
+    border: 1px solid #dededf;
+    padding: 8px;
+}
+.table_component tr:nth-child(even) td {
+    background-color: #f1e9e9;
+    color: #000000;
+}
+.table_component tr:nth-child(odd) td {
+    background-color: #ffffff;
+    color: #000000;
+}
+</style>
+"#;
+
 fn inquire(prompt: String) -> String {
     let mut line = String::new();
     println!("{}: ", prompt);
@@ -99,12 +144,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         let _ = get_agenda_from_csv(&mut agenda, csv_file);
     };
 
+    /*
     let path_to_style = Some(String::from("src/style.html"));
     let style = std::fs::read_to_string(
         path_to_style.ok_or_else(|| String::from("Can't read style.html"))?,
     )?;
+    */
 
-    write!(&mut file, "{}", style)?;
+    write!(&mut file, "{}", STYLE)?;
     write!(&mut file, "{}", INTRO)?;
     for i in agenda {
         writeln!(&mut file, "<tr>")?;
