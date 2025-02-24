@@ -2,6 +2,7 @@
 //! and generate an html table
 //! formatted per our standards
 use clap::Parser;
+use inquire::Text;
 use std::error::Error;
 use std::io::Write;
 
@@ -77,6 +78,7 @@ const STYLE: &str = r#"
 </style>
 "#;
 
+/*
 fn inquire(prompt: String) -> String {
     let mut line = String::new();
     println!("{}: ", prompt);
@@ -85,15 +87,24 @@ fn inquire(prompt: String) -> String {
     // we remove it here with trim() and ensure we return a string
     line.trim().to_string()
 }
+*/
+
+fn ask(prompt: String, helpmsg: String) -> String {
+    let status = Text::new(&prompt).with_help_message(&helpmsg).prompt();
+    status.unwrap()
+}
 
 fn get_agenda_items_interactively(agenda: &mut Vec<AgendaItem>) {
     loop {
-        let t = inquire(String::from("Time"));
+        let t = ask(String::from("Time"), String::from("Leave blank when done"));
         if t.is_empty() {
             break;
         }
-        let s = inquire(String::from("Subject"));
-        let p = inquire(String::from("Presenter"));
+        let s = ask(String::from("Subject"), String::from("Topic of discussion"));
+        let p = ask(
+            String::from("Presenter"),
+            String::from("Who will present (can be left blank)"),
+        );
         let item = AgendaItem {
             time: t,
             subject: s,
@@ -143,13 +154,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         let _ = get_agenda_from_csv(&mut agenda, csv_file);
     };
-
-    /*
-    let path_to_style = Some(String::from("src/style.html"));
-    let style = std::fs::read_to_string(
-        path_to_style.ok_or_else(|| String::from("Can't read style.html"))?,
-    )?;
-    */
 
     write!(&mut file, "{}", STYLE)?;
     write!(&mut file, "{}", INTRO)?;
