@@ -9,7 +9,7 @@ mod cli;
 use crate::cli::Args;
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize)]
 struct AgendaItem {
     time: String,
     subject: String,
@@ -41,25 +41,6 @@ fn inquire(prompt: String) -> String {
     line.trim().to_string()
 }
 
-//fn get_agenda_item() -> Vec<AgendaItem> {
-//    let mut agenda: Vec<AgendaItem> = Vec::new();
-//    loop {
-//        let t = inquire(String::from("Time"));
-//        if t.is_empty() {
-//            break;
-//        }
-//        let s = inquire(String::from("Subject"));
-//        let p = inquire(String::from("Presenter"));
-//        let item = AgendaItem {
-//            time: t,
-//            subject: s,
-//            presenter: p,
-//        };
-//        agenda.push(item);
-//    }
-//    agenda
-//}
-
 fn get_agenda_items_interactively(agenda: &mut Vec<AgendaItem>) {
     loop {
         let t = inquire(String::from("Time"));
@@ -77,6 +58,24 @@ fn get_agenda_items_interactively(agenda: &mut Vec<AgendaItem>) {
     }
 }
 
+fn get_agenda_from_csv(
+    agenda: &mut Vec<AgendaItem>,
+    inputfile: String,
+) -> Result<(), Box<dyn Error>> {
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .delimiter(b',')
+        .flexible(true)
+        .trim(csv::Trim::All)
+        .comment(Some(b'#'))
+        .from_path(std::path::Path::new(&inputfile))?;
+    for r in reader.deserialize() {
+        let item: AgendaItem = r?;
+        agenda.push(item);
+    }
+    Ok(())
+}
+
 fn get_outfile(output_filename: Option<&std::path::PathBuf>) -> Box<dyn std::io::Write> {
     match output_filename {
         Some(filename) => Box::new(std::io::BufWriter::new(
@@ -89,22 +88,20 @@ fn get_outfile(output_filename: Option<&std::path::PathBuf>) -> Box<dyn std::io:
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("Table maker");
     let args = Args::parse();
-    println!("Output: {:?}", args.output.as_deref());
-    println!("Input: {:?}", args.input.as_deref());
-    println!("Verbose: {:?}", args.verbose);
 
-    //let output_file = Some(std::path::PathBuf::from("src/agenda.html"));
-    //let mut file = get_outfile(output_file.as_ref());
     let mut file = get_outfile(args.output.as_ref());
-
     let mut agenda: Vec<AgendaItem> = Vec::new();
-    get_agenda_items_interactively(&mut agenda);
+    let csv_file = args.csv.clone().unwrap_or_else(|| String::from(""));
+    if csv_file.is_empty() {
+        get_agenda_items_interactively(&mut agenda);
+    } else {
+        let _ = get_agenda_from_csv(&mut agenda, csv_file);
+    };
 
     let path_to_style = Some(String::from("src/style.html"));
     let style = std::fs::read_to_string(
-        path_to_style.ok_or_else(|| String::from("Can't read stylme.html"))?,
+        path_to_style.ok_or_else(|| String::from("Can't read style.html"))?,
     )?;
 
     write!(&mut file, "{}", style)?;

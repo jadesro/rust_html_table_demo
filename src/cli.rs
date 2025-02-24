@@ -7,9 +7,12 @@ pub struct Args {
     #[arg(short, long)]
     pub output: Option<std::path::PathBuf>,
 
-    #[arg(short, long)]
-    pub input: Option<std::path::PathBuf>,
-
-    #[arg(short, long)]
-    pub verbose: bool,
+    #[arg(
+        short,
+        long,
+        value_name = "FILE",
+        help = "CSV File name",
+        long_help = "If a CSV file is provided, we will read from that."
+    )]
+    pub csv: Option<String>,
 }
